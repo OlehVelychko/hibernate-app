@@ -7,10 +7,12 @@ import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 import ua.com.alicecompany.model.Director;
 import ua.com.alicecompany.model.Movie;
+import ua.com.alicecompany.model.Principal;
+import ua.com.alicecompany.model.School;
+import ua.com.alicecompany.service.DirectorService;
+import ua.com.alicecompany.service.PrincipalService;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Map;
 
 public class App {
@@ -27,54 +29,27 @@ public class App {
 
             configuration.addAnnotatedClass(Director.class);
             configuration.addAnnotatedClass(Movie.class);
+            configuration.addAnnotatedClass(Principal.class);
+            configuration.addAnnotatedClass(School.class);
 
             // Initialize session factory
             SessionFactory sessionFactory = configuration.buildSessionFactory();
 
+            // Service for Principal and School operations
+            PrincipalService principalService = new PrincipalService();
+
             try (Session session = sessionFactory.openSession()) {
                 session.beginTransaction();
 
-                // Retrieve a director and list their movies
-                Director director = session.get(Director.class, 2);
-                System.out.printf("%s's movies:\n", director.getName());
-                director.getMovies().forEach(System.out::println);
+                // Test different operations
+                principalService.getPrincipalWithSchool(session, 3);
+                principalService.getSchoolWithPrincipal(session, 2);
+                principalService.createPrincipalWithSchool(session, "Eve", 50, 77);
 
-                // Retrieve a movie and its director
-                Movie movie = session.get(Movie.class, 11);
-                System.out.printf("Director of '%s' is %s\n", movie.getName(), movie.getDirector().getName());
+                // Method occurs an error
+                principalService.changePrincipalOfSchool(session, 3, 1);
 
-                // Add a new movie to an existing director
-                Director directorCN = session.get(Director.class, 6);
-                Movie newMovieByCN = new Movie("Interstellar", 2014, directorCN);
-                directorCN.getMovies().add(newMovieByCN);
-                session.persist(newMovieByCN); // Persist the new movie
-                System.out.printf("%s's movies after addition:\n", directorCN.getName());
-                directorCN.getMovies().forEach(System.out::println);
-
-                // Create a new director and their movie
-                Director directorPJ = new Director("Peter Jackson", 63);
-                Movie movieByPJ = new Movie("The Lord of the Rings trilogy", 2001, directorPJ);
-                directorPJ.setMovies(new ArrayList<>(Collections.singletonList(movieByPJ)));
-                session.persist(directorPJ); // Persist the director (cascades movie)
-                System.out.printf("%s's movies:\n", directorPJ.getName());
-                directorPJ.getMovies().forEach(System.out::println);
-
-                // Change the director of an existing movie
-                Movie movieToChangeDirector = session.get(Movie.class, 3);
-                Director directorDL = session.get(Director.class, 5);
-                movieToChangeDirector.getDirector().getMovies().remove(movieToChangeDirector); // Remove from current director
-                movieToChangeDirector.setDirector(directorDL); // Set new director
-                directorDL.getMovies().add(movieToChangeDirector); // Add to new director's movies
-                System.out.printf("%s's movies after change:\n", directorDL.getName());
-                directorDL.getMovies().forEach(System.out::println);
-
-                // Delete a movie from a director
-                Director directorGR = session.get(Director.class, 3);
-                Movie movieGR = session.get(Movie.class, 9);
-                directorGR.getMovies().remove(movieGR); // Remove the movie
-                session.remove(movieGR); // Delete the movie entity
-                System.out.printf("%s's movies after deletion:\n", directorGR.getName());
-                directorGR.getMovies().forEach(System.out::println);
+                principalService.addSchoolForPrincipal(session, 1, 99);
 
                 session.getTransaction().commit();
             } finally {
