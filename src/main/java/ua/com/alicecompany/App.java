@@ -5,12 +5,8 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
-import ua.com.alicecompany.model.Director;
-import ua.com.alicecompany.model.Movie;
-import ua.com.alicecompany.model.Principal;
-import ua.com.alicecompany.model.School;
-import ua.com.alicecompany.service.DirectorService;
-import ua.com.alicecompany.service.PrincipalService;
+import ua.com.alicecompany.model.*;
+import ua.com.alicecompany.service.AnimalService;
 
 import java.io.File;
 import java.util.Map;
@@ -31,29 +27,32 @@ public class App {
             configuration.addAnnotatedClass(Movie.class);
             configuration.addAnnotatedClass(Principal.class);
             configuration.addAnnotatedClass(School.class);
+            configuration.addAnnotatedClass(Animal.class);
+            configuration.addAnnotatedClass(Habitat.class);
 
             // Initialize session factory
             SessionFactory sessionFactory = configuration.buildSessionFactory();
 
             // Service for Principal and School operations
-            PrincipalService principalService = new PrincipalService();
+            AnimalService animalService = new AnimalService();
 
             try (Session session = sessionFactory.openSession()) {
                 session.beginTransaction();
 
-                // Test different operations
-                principalService.getPrincipalWithSchool(session, 3);
-                principalService.getSchoolWithPrincipal(session, 2);
-                principalService.createPrincipalWithSchool(session, "Eve", 50, 77);
+                // Create animals with habitats
+                animalService.createAnimalWithHabitats(session, "Tiger", "Forest", "River");
+                animalService.createAnimalWithHabitats(session, "Elephant", "Forest", "Savannah");
 
-                // Method occurs an error
-                principalService.changePrincipalOfSchool(session, 3, 1);
+                // Add a habitat to an existing animal
+                animalService.addHabitatToAnimal(session, 1, "Mountain");
 
-                principalService.addSchoolForPrincipal(session, 1, 99);
+                // List habitats of an animal
+                animalService.listAnimalHabitats(session, 1);
+
+                // Remove a habitat from an animal
+                animalService.removeHabitatFromAnimal(session, 1, 3);
 
                 session.getTransaction().commit();
-            } finally {
-                sessionFactory.close();
             }
         } catch (Exception e) {
             e.printStackTrace();
